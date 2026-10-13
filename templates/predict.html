@@ -1,0 +1,253 @@
+{% extends "base.html" %}
+
+{% block title %}Symptom Disease Prediction — MediCare ML{% endblock %}
+{% block page_heading %}AI Symptom-Based Multi-Disease Classification{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-11 col-xl-10">
+    
+    <!-- Header Card -->
+    <div class="card-healthcare mb-4 p-4 border-start border-4 border-primary">
+      <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+        <div>
+          <h4 class="fw-bold mb-1 text-primary d-flex align-items-center gap-2">
+            <i class="bi bi-cpu-fill"></i> Multi-Disease Symptom Diagnostic Engine
+          </h4>
+          <p class="text-muted mb-0 small">
+            Select patient clinical symptoms across organ systems to evaluate probabilities among <strong>41 distinct human diseases</strong>.
+          </p>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+          <span class="badge bg-teal text-white p-2 px-3 fw-bold shadow-sm" style="background-color: var(--secondary-teal);">
+            <i class="bi bi-shield-check me-1"></i> 132 Symptoms &bull; 41 Diseases
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick Demo Preset Bar for Viva/Examinations -->
+    <div class="card-healthcare mb-4 p-3 bg-white">
+      <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
+        <span class="small fw-bold text-uppercase text-secondary">
+          <i class="bi bi-lightning-charge-fill text-warning me-1"></i> Quick-Demo Disease Presets (1-Click Viva Demonstrations):
+        </span>
+        <button type="button" class="btn btn-sm btn-outline-secondary" id="clearAllSymptoms">
+          <i class="bi bi-arrow-counterclockwise me-1"></i> Clear Selection
+        </button>
+      </div>
+      <div class="d-flex flex-wrap gap-2">
+        <button type="button" class="btn btn-sm btn-outline-danger preset-btn" data-preset="malaria">
+          <i class="bi bi-bug me-1"></i> Malaria
+        </button>
+        <button type="button" class="btn btn-sm btn-outline-primary preset-btn" data-preset="dengue">
+          <i class="bi bi-virus me-1"></i> Dengue
+        </button>
+        <button type="button" class="btn btn-sm btn-outline-info text-dark preset-btn" data-preset="cold">
+          <i class="bi bi-snow me-1"></i> Common Cold
+        </button>
+        <button type="button" class="btn btn-sm btn-outline-warning text-dark preset-btn" data-preset="gerd">
+          <i class="bi bi-fire me-1"></i> GERD / Acid Reflux
+        </button>
+        <button type="button" class="btn btn-sm btn-outline-dark preset-btn" data-preset="pneumonia">
+          <i class="bi bi-lungs me-1"></i> Pneumonia
+        </button>
+        <button type="button" class="btn btn-sm btn-outline-success preset-btn" data-preset="fungal">
+          <i class="bi bi-bandaid me-1"></i> Fungal Infection
+        </button>
+      </div>
+    </div>
+
+    <!-- Prediction Form -->
+    <div class="card-healthcare p-4">
+      <form action="{{ url_for('predict') }}" method="POST" id="symptomForm">
+        
+        <!-- Patient Association Row -->
+        <div class="row g-3 mb-4 pb-3 border-bottom">
+          <div class="col-md-6">
+            <label for="patient_id" class="form-label form-label-med">Registered Patient (Optional)</label>
+            <select name="patient_id" id="patient_id" class="form-select form-control-med">
+              <option value="">-- Anonymous / Direct Screening --</option>
+              {% for p in patients %}
+                <option value="{{ p['id'] }}" {% if patient_id|string == p['id']|string %}selected{% endif %}>
+                  {{ p['name'] }} (Age: {{ p['age'] }})
+                </option>
+              {% endfor %}
+            </select>
+            <div class="form-helper-text">Linking to a patient saves this diagnosis to their clinical record.</div>
+          </div>
+          <div class="col-md-6">
+            <label for="patient_name" class="form-label form-label-med">Or Enter Patient / Guest Name</label>
+            <input type="text" name="patient_name" id="patient_name" class="form-control form-control-med"
+                   placeholder="e.g. Sarah Jenkins" value="{{ patient_name }}">
+          </div>
+        </div>
+
+        <!-- Live Symptom Search & Selected Counter -->
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+          <div>
+            <h6 class="fw-bold text-dark text-uppercase small letter-spacing-1 mb-0">
+              <i class="bi bi-check2-circle text-teal me-1"></i> Select Observed Symptoms (Choose at least 2):
+            </h6>
+          </div>
+          <div class="d-flex align-items-center gap-2">
+            <span class="badge bg-primary px-3 py-2 fs-7" id="selectedBadge">0 Symptoms Selected</span>
+            <div class="input-group input-group-sm" style="width: 220px;">
+              <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
+              <input type="text" class="form-control" id="symptomSearch" placeholder="Filter symptoms...">
+            </div>
+          </div>
+        </div>
+
+        <!-- Categorized Symptoms Accordion -->
+        <div class="accordion mb-4" id="symptomsAccordion">
+          {% for cat_name, cat_symptoms in categories.items() %}
+            <div class="accordion-item border rounded mb-2 overflow-hidden symptom-category-block">
+              <h2 class="accordion-header" id="headingCat{{ loop.index }}">
+                <button class="accordion-button {% if loop.index > 2 %}collapsed{% endif %} py-2 px-3 fw-bold bg-light" 
+                        type="button" data-bs-toggle="collapse" data-bs-target="#collapseCat{{ loop.index }}">
+                  <i class="bi bi-folder2-open text-primary me-2"></i>
+                  <span>{{ cat_name }}</span>
+                  <span class="badge bg-secondary ms-2 small">{{ cat_symptoms|length }} symptoms</span>
+                </button>
+              </h2>
+              <div id="collapseCat{{ loop.index }}" class="accordion-collapse collapse {% if loop.index <= 2 %}show{% endif %}" 
+                   data-bs-parent="#symptomsAccordion">
+                <div class="accordion-body p-3">
+                  <div class="row g-2">
+                    {% for sym_key in cat_symptoms %}
+                      <div class="col-sm-6 col-md-4 col-lg-3 symptom-col" data-name="{{ sym_key|replace('_', ' ')|lower }}">
+                        <div class="form-check p-2 rounded border bg-white h-100 symptom-checkbox-card">
+                          <input class="form-check-input ms-0 me-2 symptom-input" type="checkbox" 
+                                 name="symptoms" value="{{ sym_key }}" id="sym_{{ sym_key }}"
+                                 {% if sym_key in selected_symptoms %}checked{% endif %}>
+                          <label class="form-check-label small fw-semibold text-dark w-100 cursor-pointer" for="sym_{{ sym_key }}">
+                            {{ sym_key|replace('__', ' ')|replace('_', ' ')|title }}
+                          </label>
+                        </div>
+                      </div>
+                    {% endfor %}
+                  </div>
+                </div>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+
+        <!-- Clinical Notes -->
+        <div class="mb-4">
+          <label for="notes" class="form-label form-label-med">Attending Notes / Patient History (Optional)</label>
+          <textarea name="notes" id="notes" rows="2" class="form-control form-control-med"
+                    placeholder="Enter any additional symptom notes or onset duration..."></textarea>
+        </div>
+
+        <!-- Mandatory Educational Disclaimer -->
+        <div class="educational-disclaimer mb-4">
+          <div class="d-flex align-items-center gap-2 mb-1">
+            <i class="bi bi-shield-alert fs-5"></i>
+            <strong>Educational AI Prototype Disclaimer</strong>
+          </div>
+          <small class="d-block">
+            This symptom diagnostic model is trained on a 41-disease medical database for university engineering demonstration. It is not an FDA-cleared diagnostic device. Severe or sudden symptoms (chest pain, stroke signs, difficulty breathing) require immediate in-person emergency hospital care.
+          </small>
+        </div>
+
+        <!-- Form Actions -->
+        <div class="d-flex justify-content-between align-items-center pt-2">
+          <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-1"></i> Return to Dashboard
+          </a>
+          <button type="submit" class="btn btn-med-teal px-4 py-2 fs-6 d-inline-flex align-items-center gap-2 shadow-sm">
+            <i class="bi bi-magic"></i> Run Multi-Disease Diagnosis
+          </button>
+        </div>
+
+      </form>
+    </div>
+
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  const checkboxes = document.querySelectorAll(".symptom-input");
+  const selectedBadge = document.getElementById("selectedBadge");
+  const searchInput = document.getElementById("symptomSearch");
+  const symptomCols = document.querySelectorAll(".symptom-col");
+  const clearBtn = document.getElementById("clearAllSymptoms");
+
+  function updateCount() {
+    let count = 0;
+    checkboxes.forEach(cb => {
+      if (cb.checked) count++;
+      const card = cb.closest(".symptom-checkbox-card");
+      if (card) {
+        if (cb.checked) {
+          card.classList.add("border-primary", "bg-primary", "bg-opacity-10");
+        } else {
+          card.classList.remove("border-primary", "bg-primary", "bg-opacity-10");
+        }
+      }
+    });
+    selectedBadge.textContent = `${count} Symptoms Selected`;
+    if (count >= 2) {
+      selectedBadge.className = "badge bg-success px-3 py-2 fs-7";
+    } else {
+      selectedBadge.className = "badge bg-warning text-dark px-3 py-2 fs-7";
+    }
+  }
+
+  checkboxes.forEach(cb => {
+    cb.addEventListener("change", updateCount);
+  });
+  updateCount();
+
+  // Instant Search filter
+  searchInput.addEventListener("input", function () {
+    const q = this.value.toLowerCase().trim();
+    symptomCols.forEach(col => {
+      const name = col.getAttribute("data-name");
+      if (!q || name.includes(q)) {
+        col.style.display = "";
+      } else {
+        col.style.display = "none";
+      }
+    });
+  });
+
+  // Presets mapping
+  const presets = {
+    "malaria": ["chills", "vomiting", "high_fever", "sweating", "headache", "nausea", "muscle_pain"],
+    "dengue": ["skin_rash", "chills", "joint_pain", "vomiting", "fatigue", "high_fever", "headache", "loss_of_appetite"],
+    "cold": ["continuous_sneezing", "chills", "fatigue", "cough", "headache", "runny_nose", "congestion"],
+    "gerd": ["stomach_pain", "acidity", "ulcers_on_tongue", "vomiting", "cough", "chest_pain"],
+    "pneumonia": ["chills", "fatigue", "cough", "high_fever", "breathlessness", "sweating", "malaise", "phlegm", "chest_pain"],
+    "fungal": ["itching", "skin_rash", "nodal_skin_eruptions", "dischromic__patches"]
+  };
+
+  document.querySelectorAll(".preset-btn").forEach(btn => {
+    btn.addEventListener("click", function () {
+      const pKey = this.getAttribute("data-preset");
+      const list = presets[pKey] || [];
+      checkboxes.forEach(cb => {
+        cb.checked = list.includes(cb.value);
+      });
+      // Expand accordion items that contain checked boxes
+      document.querySelectorAll(".accordion-collapse").forEach(acc => {
+        if (acc.querySelector(".symptom-input:checked")) {
+          acc.classList.add("show");
+        }
+      });
+      updateCount();
+    });
+  });
+
+  clearBtn.addEventListener("click", function () {
+    checkboxes.forEach(cb => cb.checked = false);
+    updateCount();
+  });
+});
+</script>
+{% endblock %}

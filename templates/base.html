@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Dashboard{% endblock %} — MediCare ML</title>
+  
+  <!-- Bootstrap 5 CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Bootstrap Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+  <!-- Custom Healthcare CSS -->
+  <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
+</head>
+<body>
+
+<div class="sidebar-backdrop"></div>
+
+<div class="app-wrapper">
+  <!-- Sidebar Navigation -->
+  <aside class="sidebar">
+    <a href="{{ url_for('dashboard') }}" class="sidebar-brand">
+      <div class="sidebar-brand-icon">
+        <i class="bi bi-heart-pulse-fill"></i>
+      </div>
+      <div class="sidebar-brand-text">
+        <span class="sidebar-brand-title">MediCare ML</span>
+        <span class="sidebar-brand-subtitle">Health Intelligence</span>
+      </div>
+    </a>
+
+    <div class="sidebar-nav">
+      <span class="nav-section-title">Core Navigation</span>
+      <a href="{{ url_for('dashboard') }}" class="sidebar-link {% if request.endpoint == 'dashboard' %}active{% endif %}">
+        <i class="bi bi-grid-1x2-fill"></i>
+        <span>Dashboard</span>
+      </a>
+      <a href="{{ url_for('predict') }}" class="sidebar-link {% if request.endpoint in ['predict', 'prediction_result'] %}active{% endif %}">
+        <i class="bi bi-cpu-fill"></i>
+        <span>Disease Prediction</span>
+      </a>
+      <a href="{{ url_for('prediction_history') }}" class="sidebar-link {% if request.endpoint == 'prediction_history' %}active{% endif %}">
+        <i class="bi bi-clock-history"></i>
+        <span>Prediction History</span>
+      </a>
+
+      <span class="nav-section-title mt-2">Clinical Management</span>
+      <a href="{{ url_for('patients_list') }}" class="sidebar-link {% if request.endpoint and 'patient' in request.endpoint %}active{% endif %}">
+        <i class="bi bi-people-fill"></i>
+        <span>Patient Records</span>
+      </a>
+      <a href="{{ url_for('appointments_list') }}" class="sidebar-link {% if request.endpoint and 'appointment' in request.endpoint %}active{% endif %}">
+        <i class="bi bi-calendar2-check-fill"></i>
+        <span>Appointments</span>
+      </a>
+
+      <span class="nav-section-title mt-2">Information</span>
+      <a href="{{ url_for('about') }}" class="sidebar-link {% if request.endpoint == 'about' %}active{% endif %}">
+        <i class="bi bi-info-circle-fill"></i>
+        <span>About & ML Architecture</span>
+      </a>
+    </div>
+
+    <div class="sidebar-footer">
+      <div class="d-flex flex-column gap-1">
+        <div class="ml-status-pill">
+          <span class="pulse-dot"></span>
+          <span>ML Engine: XGBoost Ready</span>
+        </div>
+        <small class="text-white-50 mt-1" style="font-size: 0.72rem;">
+          College Prototype v1.0
+        </small>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main Content Area -->
+  <div class="main-wrapper">
+    <!-- Top Header Bar -->
+    <header class="top-navbar">
+      <div class="d-flex align-items-center gap-3">
+        <button class="btn btn-outline-secondary btn-sm d-lg-none" id="sidebarToggle" aria-label="Toggle navigation">
+          <i class="bi bi-list fs-5"></i>
+        </button>
+        <div class="d-none d-md-flex flex-column">
+          <h6 class="mb-0 fw-bold text-dark">{% block page_heading %}Healthcare Overview{% endblock %}</h6>
+          <small class="text-muted">Educational Medical Decision Support Prototype</small>
+        </div>
+      </div>
+
+      <div class="d-flex align-items-center gap-2">
+        <a href="{{ url_for('predict') }}" class="btn btn-sm btn-med-teal d-flex align-items-center gap-1">
+          <i class="bi bi-plus-circle"></i>
+          <span>New Prediction</span>
+        </a>
+        <a href="{{ url_for('patient_new') }}" class="btn btn-sm btn-outline-primary d-none d-sm-flex align-items-center gap-1">
+          <i class="bi bi-person-plus"></i>
+          <span>Add Patient</span>
+        </a>
+      </div>
+    </header>
+
+    <!-- Page Body -->
+    <main class="page-content">
+      <!-- Flash Messages -->
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          <div class="mb-4">
+            {% for category, message in messages %}
+              <div class="alert alert-{{ category }} alert-dismissible fade show d-flex align-items-center gap-2 shadow-sm" role="alert">
+                {% if category == 'success' %}
+                  <i class="bi bi-check-circle-fill fs-5"></i>
+                {% elif category == 'danger' %}
+                  <i class="bi bi-exclamation-triangle-fill fs-5"></i>
+                {% else %}
+                  <i class="bi bi-info-circle-fill fs-5"></i>
+                {% endif %}
+                <div>{{ message }}</div>
+                <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert" aria-label="Close"></button>
+              </div>
+            {% endfor %}
+          </div>
+        {% endif %}
+      {% endwith %}
+
+      {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white border-top py-3 px-4 mt-auto text-muted small d-flex flex-wrap justify-content-between align-items-center">
+      <div>
+        <strong>MediCare ML</strong> — Academic Healthcare Informatics Project &copy; {{ current_year }}
+      </div>
+      <div class="text-secondary">
+        <i class="bi bi-shield-exclamation text-warning me-1"></i>
+        Educational prototype only. Not for clinical diagnosis.
+      </div>
+    </footer>
+  </div>
+</div>
+
+<!-- Bootstrap 5 Bundle JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<!-- Main Custom JS -->
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

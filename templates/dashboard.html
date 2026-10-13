@@ -1,0 +1,234 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard — MediCare ML{% endblock %}
+{% block page_heading %}Healthcare Clinical Dashboard{% endblock %}
+
+{% block content %}
+<!-- Welcome & Quick Banner -->
+<div class="card-healthcare mb-4 p-4" style="background: linear-gradient(135deg, #0f2b48 0%, #1a73e8 100%); color: #ffffff;">
+  <div class="row align-items-center">
+    <div class="col-lg-8">
+      <div class="badge bg-white text-primary px-3 py-1 mb-2 fw-semibold">
+        <i class="bi bi-mortarboard-fill me-1"></i> Multi-Disease Engineering Project
+      </div>
+      <h3 class="fw-bold mb-2">Welcome to MediCare ML Medical Management System</h3>
+      <p class="mb-3 text-white-50" style="max-width: 650px;">
+        An intelligent healthcare platform that integrates patient management, clinical scheduling, and an AI-powered <strong>Multi-Disease Diagnostic Classifier</strong> that predicts across <strong>41 distinct human conditions</strong> from 132 observable clinical symptoms.
+      </p>
+      <div class="d-flex flex-wrap gap-2">
+        <a href="{{ url_for('predict') }}" class="btn btn-med-teal d-inline-flex align-items-center gap-2">
+          <i class="bi bi-cpu-fill"></i> Check Symptoms & Predict
+        </a>
+        <a href="{{ url_for('patient_new') }}" class="btn btn-outline-light d-inline-flex align-items-center gap-2">
+          <i class="bi bi-person-plus-fill"></i> Register Patient
+        </a>
+        <a href="{{ url_for('appointment_new') }}" class="btn btn-outline-light d-inline-flex align-items-center gap-2">
+          <i class="bi bi-calendar-plus-fill"></i> Book Appointment
+        </a>
+      </div>
+    </div>
+    <div class="col-lg-4 d-none d-lg-flex justify-content-end">
+      <div class="text-end p-3 rounded" style="background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(5px); border: 1px solid rgba(255, 255, 255, 0.15);">
+        <small class="text-white-50 d-block text-uppercase fw-bold" style="font-size: 0.72rem;">Multi-Class Disease Engine</small>
+        <span class="fw-bold fs-6 text-white d-block mt-1">Random Forest Classifier</span>
+        <small class="text-white-50 d-block mt-1">132 Symptoms &bull; 41 Distinct Diseases</small>
+        {% if eval_metrics %}
+          <div class="mt-2 pt-2 border-top border-white border-opacity-25 d-flex justify-content-between text-start small">
+            <span>Accuracy: <strong>{{ (eval_metrics['accuracy'] * 100)|round(1) }}%</strong></span>
+            <span>Test Cases: <strong>{{ eval_metrics['test_samples'] }}</strong></span>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 4 Key Stat Metrics -->
+<div class="row g-3 mb-4">
+  <div class="col-sm-6 col-xl-3">
+    <div class="stat-card">
+      <div class="stat-icon blue">
+        <i class="bi bi-people-fill"></i>
+      </div>
+      <div class="stat-info">
+        <span class="stat-label">Total Patients</span>
+        <span class="stat-value">{{ total_patients }}</span>
+        <small class="text-muted mt-1"><a href="{{ url_for('patients_list') }}" class="text-decoration-none">Manage records &rarr;</a></small>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-sm-6 col-xl-3">
+    <div class="stat-card">
+      <div class="stat-icon teal">
+        <i class="bi bi-calendar2-check-fill"></i>
+      </div>
+      <div class="stat-info">
+        <span class="stat-label">Appointments</span>
+        <span class="stat-value">{{ total_appointments }}</span>
+        <small class="text-muted mt-1"><a href="{{ url_for('appointments_list') }}" class="text-decoration-none">View calendar &rarr;</a></small>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-sm-6 col-xl-3">
+    <div class="stat-card">
+      <div class="stat-icon purple">
+        <i class="bi bi-activity"></i>
+      </div>
+      <div class="stat-info">
+        <span class="stat-label">Total Screenings</span>
+        <span class="stat-value">{{ total_predictions }}</span>
+        <small class="text-muted mt-1"><a href="{{ url_for('prediction_history') }}" class="text-decoration-none">Diagnostic logs &rarr;</a></small>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-sm-6 col-xl-3">
+    <div class="stat-card">
+      <div class="stat-icon red">
+        <i class="bi bi-exclamation-diamond-fill"></i>
+      </div>
+      <div class="stat-info">
+        <span class="stat-label">High Attention</span>
+        <span class="stat-value text-danger">{{ high_attention_cases }}</span>
+        <small class="text-muted mt-1"><span class="text-secondary">Requires specialist</span></small>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Main Dashboard Content Grid -->
+<div class="row g-4">
+  <!-- Recent Predictions Table -->
+  <div class="col-lg-7">
+    <div class="card-healthcare h-100">
+      <div class="card-header-healthcare">
+        <h5 class="card-title-healthcare">
+          <i class="bi bi-cpu text-primary"></i> Recent Multi-Disease Diagnoses
+        </h5>
+        <a href="{{ url_for('prediction_history') }}" class="btn btn-sm btn-outline-secondary">View All</a>
+      </div>
+
+      {% if recent_predictions %}
+        <div class="table-responsive">
+          <table class="table table-healthcare">
+            <thead>
+              <tr>
+                <th>Patient</th>
+                <th>Predicted Condition</th>
+                <th>Confidence</th>
+                <th>Specialty</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for pred in recent_predictions %}
+                <tr>
+                  <td class="fw-semibold text-dark">{{ pred['patient_name'] }}</td>
+                  <td>
+                    <strong class="text-primary">{{ pred['predicted_disease'] }}</strong>
+                    <small class="d-block text-muted" style="font-size: 0.72rem;">{{ pred['symptoms_summary']|truncate(25) }}</small>
+                  </td>
+                  <td>
+                    <div class="d-flex align-items-center gap-2">
+                      <div class="progress flex-grow-1" style="height: 6px; width: 50px;">
+                        <div class="progress-bar {% if pred['severity'] == 'High Attention' %}bg-danger{% else %}bg-success{% endif %}" 
+                             role="progressbar" style="width: {{ pred['confidence_pct'] }}%;"></div>
+                      </div>
+                      <small class="fw-bold">{{ pred['confidence_pct'] }}%</small>
+                    </div>
+                  </td>
+                  <td>
+                    <span class="badge bg-light text-dark border">{{ pred['department'] }}</span>
+                  </td>
+                  <td>
+                    <a href="{{ url_for('prediction_result', record_id=pred['id']) }}" class="btn btn-sm btn-light border py-1 px-2" title="View Full Report">
+                      <i class="bi bi-eye"></i>
+                    </a>
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <div class="empty-state">
+          <i class="bi bi-clipboard2-pulse empty-state-icon"></i>
+          <h6 class="empty-state-title">No symptom screenings yet</h6>
+          <p class="empty-state-desc">Input observed patient symptoms to run multi-disease classification.</p>
+          <a href="{{ url_for('predict') }}" class="btn btn-sm btn-med-teal">Check Symptoms Now</a>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Recent Appointments Table -->
+  <div class="col-lg-5">
+    <div class="card-healthcare h-100">
+      <div class="card-header-healthcare">
+        <h5 class="card-title-healthcare">
+          <i class="bi bi-calendar2-event text-teal"></i> Clinical Appointments
+        </h5>
+        <a href="{{ url_for('appointments_list') }}" class="btn btn-sm btn-outline-secondary">View All</a>
+      </div>
+
+      {% if recent_appointments %}
+        <div class="table-responsive">
+          <table class="table table-healthcare">
+            <thead>
+              <tr>
+                <th>Patient</th>
+                <th>Doctor</th>
+                <th>Date & Time</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for apt in recent_appointments %}
+                <tr>
+                  <td class="fw-semibold text-dark">{{ apt['patient_name'] }}</td>
+                  <td>
+                    <small class="d-block">{{ apt['doctor_name'] }}</small>
+                    <small class="text-muted" style="font-size: 0.75rem;">{{ apt['department'] }}</small>
+                  </td>
+                  <td>
+                    <small class="d-block fw-semibold">{{ apt['appointment_date'] }}</small>
+                    <small class="text-muted">{{ apt['appointment_time'] }}</small>
+                  </td>
+                  <td>
+                    {% if apt['status'] == 'Scheduled' %}
+                      <span class="badge badge-status badge-scheduled">Scheduled</span>
+                    {% elif apt['status'] == 'Completed' %}
+                      <span class="badge badge-status badge-completed">Completed</span>
+                    {% else %}
+                      <span class="badge badge-status badge-cancelled">Cancelled</span>
+                    {% endif %}
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <div class="empty-state">
+          <i class="bi bi-calendar-x empty-state-icon"></i>
+          <h6 class="empty-state-title">No appointments found</h6>
+          <p class="empty-state-desc">Organize doctor visits and patient follow-ups.</p>
+          <a href="{{ url_for('appointment_new') }}" class="btn btn-sm btn-med-primary">Book Appointment</a>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<!-- Academic Disclaimer -->
+<div class="educational-disclaimer mt-4 d-flex align-items-start gap-3">
+  <i class="bi bi-shield-exclamation fs-4 flex-shrink-0"></i>
+  <div>
+    <strong>Academic Prototype Notice:</strong>
+    MediCare ML is developed strictly for collegiate educational and research demonstration purposes. 
+    The multi-disease symptom predictions are calculated by a machine learning ensemble model and do not constitute authorized clinical diagnoses or medical advice. Always consult certified healthcare professionals.
+  </div>
+</div>
+{% endblock %}

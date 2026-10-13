@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+
+{% block title %}{{ action }} Appointment — MediCare ML{% endblock %}
+{% block page_heading %}{{ action }} Clinical Appointment{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-8 col-xl-7">
+    <div class="card-healthcare p-4">
+      <div class="d-flex align-items-center justify-content-between mb-3 pb-2 border-bottom">
+        <h5 class="fw-bold text-teal mb-0">
+          <i class="bi bi-calendar-check me-1"></i> {{ action }} Appointment
+        </h5>
+        <span class="badge bg-light text-muted border">Clinical Scheduling</span>
+      </div>
+
+      <form method="POST" novalidate>
+        <!-- Patient selection -->
+        <div class="mb-3">
+          <label for="patient_id" class="form-label form-label-med">Registered Patient</label>
+          <select name="patient_id" id="patient_id" class="form-select form-control-med">
+            <option value="">-- Manual Patient Entry --</option>
+            {% for p in patients %}
+              <option value="{{ p['id'] }}" {% if appointment.get('patient_id')|string == p['id']|string %}selected{% endif %}>
+                {{ p['name'] }}
+              </option>
+            {% endfor %}
+          </select>
+          <div class="form-helper-text">Select existing patient or enter custom name below.</div>
+        </div>
+
+        <div class="mb-3">
+          <label for="patient_name" class="form-label form-label-med">Patient Name <span class="text-danger">*</span></label>
+          <input type="text" name="patient_name" id="patient_name" class="form-control form-control-med"
+                 placeholder="e.g. Michael Scott" required value="{{ appointment.get('patient_name', '') }}">
+        </div>
+
+        <div class="row g-3 mb-3">
+          <div class="col-md-6">
+            <label for="doctor_name" class="form-label form-label-med">Attending Doctor <span class="text-danger">*</span></label>
+            <input type="text" name="doctor_name" id="doctor_name" class="form-control form-control-med"
+                   placeholder="e.g. Dr. Evelyn Reed" required value="{{ appointment.get('doctor_name', 'Dr. Evelyn Reed') }}">
+          </div>
+          <div class="col-md-6">
+            <label for="department" class="form-label form-label-med">Department <span class="text-danger">*</span></label>
+            <select name="department" id="department" class="form-select form-control-med" required>
+              <option value="Endocrinology" {% if appointment.get('department') == 'Endocrinology' %}selected{% endif %}>Endocrinology</option>
+              <option value="General Medicine" {% if appointment.get('department') == 'General Medicine' %}selected{% endif %}>General Medicine</option>
+              <option value="Cardiology" {% if appointment.get('department') == 'Cardiology' %}selected{% endif %}>Cardiology</option>
+              <option value="Nutrition & Dietetics" {% if appointment.get('department') == 'Nutrition & Dietetics' %}selected{% endif %}>Nutrition & Dietetics</option>
+              <option value="Preventative Care" {% if appointment.get('department') == 'Preventative Care' %}selected{% endif %}>Preventative Care</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="row g-3 mb-3">
+          <div class="col-md-6">
+            <label for="appointment_date" class="form-label form-label-med">Date <span class="text-danger">*</span></label>
+            <input type="date" name="appointment_date" id="appointment_date" class="form-control form-control-med"
+                   required value="{{ appointment.get('appointment_date', '') }}">
+          </div>
+          <div class="col-md-6">
+            <label for="appointment_time" class="form-label form-label-med">Time Slot <span class="text-danger">*</span></label>
+            <input type="text" name="appointment_time" id="appointment_time" class="form-control form-control-med"
+                   placeholder="e.g. 10:30 AM" required value="{{ appointment.get('appointment_time', '10:00 AM') }}">
+          </div>
+        </div>
+
+        <div class="mb-3">
+          <label for="reason" class="form-label form-label-med">Consultation Reason <span class="text-danger">*</span></label>
+          <textarea name="reason" id="reason" rows="2" class="form-control form-control-med"
+                    placeholder="e.g. Routine metabolic checkup, HbA1c review..." required>{{ appointment.get('reason', '') }}</textarea>
+        </div>
+
+        {% if action == 'Edit' %}
+          <div class="mb-4">
+            <label for="status" class="form-label form-label-med">Appointment Status</label>
+            <select name="status" id="status" class="form-select form-control-med">
+              <option value="Scheduled" {% if appointment.get('status') == 'Scheduled' %}selected{% endif %}>Scheduled</option>
+              <option value="Completed" {% if appointment.get('status') == 'Completed' %}selected{% endif %}>Completed</option>
+              <option value="Cancelled" {% if appointment.get('status') == 'Cancelled' %}selected{% endif %}>Cancelled</option>
+            </select>
+          </div>
+        {% endif %}
+
+        <div class="d-flex justify-content-between align-items-center pt-3 border-top">
+          <a href="{{ url_for('appointments_list') }}" class="btn btn-outline-secondary">
+            <i class="bi bi-x-circle me-1"></i> Cancel
+          </a>
+          <button type="submit" class="btn btn-med-teal px-4">
+            <i class="bi bi-calendar-check me-1"></i> Save Appointment
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

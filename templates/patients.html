@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+
+{% block title %}Patients Directory — MediCare ML{% endblock %}
+{% block page_heading %}Patient Directory{% endblock %}
+
+{% block content %}
+<div class="card-healthcare">
+  <div class="card-header-healthcare flex-wrap gap-2">
+    <div>
+      <h5 class="card-title-healthcare">
+        <i class="bi bi-people-fill text-primary"></i> Registered Patient Records
+      </h5>
+      <small class="text-muted">Total: {{ patients|length }} patient profiles</small>
+    </div>
+
+    <div class="d-flex align-items-center gap-2">
+      <!-- Search Form -->
+      <form action="{{ url_for('patients_list') }}" method="GET" class="d-flex align-items-center">
+        <div class="input-group input-group-sm">
+          <input type="text" name="q" class="form-control" placeholder="Search name, phone, email..." 
+                 value="{{ search_query }}">
+          {% if search_query %}
+            <a href="{{ url_for('patients_list') }}" class="btn btn-outline-secondary">
+              <i class="bi bi-x"></i>
+            </a>
+          {% endif %}
+          <button class="btn btn-outline-primary" type="submit">
+            <i class="bi bi-search"></i>
+          </button>
+        </div>
+      </form>
+
+      <a href="{{ url_for('patient_new') }}" class="btn btn-sm btn-med-primary text-nowrap d-flex align-items-center gap-1">
+        <i class="bi bi-person-plus-fill"></i> Add Patient
+      </a>
+    </div>
+  </div>
+
+  {% if patients %}
+    <div class="table-responsive">
+      <table class="table table-healthcare">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Name</th>
+            <th>Age / Gender</th>
+            <th>Contact Phone</th>
+            <th>Email</th>
+            <th>Blood Group</th>
+            <th class="text-end">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for patient in patients %}
+            <tr>
+              <td class="text-muted fw-bold">#{{ patient['id'] }}</td>
+              <td>
+                <a href="{{ url_for('patient_detail', patient_id=patient['id']) }}" class="fw-bold text-dark text-decoration-none">
+                  {{ patient['name'] }}
+                </a>
+              </td>
+              <td>
+                <span>{{ patient['age'] }} yrs</span> &bull; 
+                <span class="text-muted">{{ patient['gender'] }}</span>
+              </td>
+              <td>
+                <small class="text-secondary"><i class="bi bi-telephone me-1"></i>{{ patient['phone'] }}</small>
+              </td>
+              <td>
+                <small class="text-secondary">{{ patient['email'] or '—' }}</small>
+              </td>
+              <td>
+                <span class="badge bg-light text-dark border">{{ patient['blood_group'] or 'N/A' }}</span>
+              </td>
+              <td class="text-end">
+                <div class="btn-group btn-group-sm">
+                  <a href="{{ url_for('predict', patient_id=patient['id']) }}" class="btn btn-outline-teal" title="Run ML Prediction">
+                    <i class="bi bi-cpu"></i>
+                  </a>
+                  <a href="{{ url_for('patient_detail', patient_id=patient['id']) }}" class="btn btn-outline-secondary" title="View Profile">
+                    <i class="bi bi-eye"></i>
+                  </a>
+                  <a href="{{ url_for('patient_edit', patient_id=patient['id']) }}" class="btn btn-outline-secondary" title="Edit">
+                    <i class="bi bi-pencil"></i>
+                  </a>
+                  <form action="{{ url_for('patient_delete', patient_id=patient['id']) }}" method="POST" 
+                        class="d-inline" onsubmit="return confirm('Are you sure you want to delete patient record for {{ patient['name'] }}?');">
+                    <button type="submit" class="btn btn-outline-danger" title="Delete">
+                      <i class="bi bi-trash"></i>
+                    </button>
+                  </form>
+                </div>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <div class="empty-state">
+      <i class="bi bi-person-x empty-state-icon"></i>
+      <h6 class="empty-state-title">No patient records found</h6>
+      <p class="empty-state-desc">
+        {% if search_query %}
+          No patients match the search term "{{ search_query }}". Try clearing the search.
+        {% else %}
+          Get started by adding your first patient profile to the system.
+        {% endif %}
+      </p>
+      {% if search_query %}
+        <a href="{{ url_for('patients_list') }}" class="btn btn-sm btn-outline-secondary">Clear Search</a>
+      {% else %}
+        <a href="{{ url_for('patient_new') }}" class="btn btn-sm btn-med-primary">Register New Patient</a>
+      {% endif %}
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

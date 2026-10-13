@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+
+{% block title %}{{ action }} Patient — MediCare ML{% endblock %}
+{% block page_heading %}{{ action }} Patient Record{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-8 col-xl-7">
+    <div class="card-healthcare p-4">
+      <div class="d-flex align-items-center justify-content-between mb-3 pb-2 border-bottom">
+        <h5 class="fw-bold text-primary mb-0">
+          <i class="bi bi-person-fill-gear me-1"></i> {{ action }} Patient Profile
+        </h5>
+        <span class="badge bg-light text-muted border">Medical Registration</span>
+      </div>
+
+      <form method="POST" novalidate>
+        <div class="mb-3">
+          <label for="name" class="form-label form-label-med">Full Legal Name <span class="text-danger">*</span></label>
+          <input type="text" name="name" id="name" class="form-control form-control-med" 
+                 placeholder="e.g. John Doe" required value="{{ patient.get('name', '') }}">
+        </div>
+
+        <div class="row g-3 mb-3">
+          <div class="col-md-6">
+            <label for="age" class="form-label form-label-med">Age (Years) <span class="text-danger">*</span></label>
+            <input type="number" name="age" id="age" class="form-control form-control-med" 
+                   min="1" max="120" placeholder="e.g. 42" required value="{{ patient.get('age', '') }}">
+          </div>
+          <div class="col-md-6">
+            <label for="gender" class="form-label form-label-med">Gender <span class="text-danger">*</span></label>
+            <select name="gender" id="gender" class="form-select form-control-med" required>
+              <option value="">Select Gender</option>
+              <option value="Male" {% if patient.get('gender') == 'Male' %}selected{% endif %}>Male</option>
+              <option value="Female" {% if patient.get('gender') == 'Female' %}selected{% endif %}>Female</option>
+              <option value="Other" {% if patient.get('gender') == 'Other' %}selected{% endif %}>Other</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="row g-3 mb-3">
+          <div class="col-md-6">
+            <label for="phone" class="form-label form-label-med">Contact Phone <span class="text-danger">*</span></label>
+            <input type="tel" name="phone" id="phone" class="form-control form-control-med" 
+                   placeholder="e.g. +1 555-0199" required value="{{ patient.get('phone', '') }}">
+          </div>
+          <div class="col-md-6">
+            <label for="email" class="form-label form-label-med">Email Address (Optional)</label>
+            <input type="email" name="email" id="email" class="form-control form-control-med" 
+                   placeholder="e.g. patient@example.com" value="{{ patient.get('email', '') }}">
+          </div>
+        </div>
+
+        <div class="mb-4">
+          <label for="blood_group" class="form-label form-label-med">Blood Group</label>
+          <select name="blood_group" id="blood_group" class="form-select form-control-med">
+            <option value="">Unknown / Not Tested</option>
+            {% for bg in ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'] %}
+              <option value="{{ bg }}" {% if patient.get('blood_group') == bg %}selected{% endif %}>{{ bg }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="d-flex justify-content-between align-items-center pt-3 border-top">
+          <a href="{{ url_for('patients_list') }}" class="btn btn-outline-secondary">
+            <i class="bi bi-x-circle me-1"></i> Cancel
+          </a>
+          <button type="submit" class="btn btn-med-primary px-4">
+            <i class="bi bi-check-circle me-1"></i> Save Patient Profile
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
